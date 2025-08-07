@@ -1,0 +1,49 @@
+# # TASK 
+# dataset_path: C:\Users\iheiman\Desktop\CODE\MUMO\lmms-eval\data\dota
+# output_type: generate_until
+# task: "dota_counting
+# test_split: validation
+
+# # PROCESSING FUNCTIONS
+# process_docs: !function utils.dota_filter_counting
+# doc_to_visual: !function utils.dota_doc_to_visual
+# doc_to_text: !function utils.dota_doc_to_text
+# doc_to_target: "answer"
+
+# # PROMPT 
+# # Don't need because i already included in jsonl file
+# # lmms_eval_specific_kwargs:
+# #   default:
+# #     pre_prompt: ""
+# #     post_prompt: "\nAnswer the question with a single word."
+# #   qwen_vl:
+# #     pre_prompt: ""
+# #     post_prompt: " Answer:"
+
+# # GENERATION 
+# generation_kwargs:
+#   max_new_tokens: 16
+#   temperature: 0
+#   do_sample: false
+
+# # POSTPROCESSING AND FILTERING
+# process_results: !function utils_rec.refcoco_bbox_rec_process_result
+# filter_list:
+#   - name: "flexible-extract"
+#     filter:
+#       - function: !function utils.MultiChoiceRegexFilter
+#         group_select: 0
+#         ignore_case: true
+#         ignore_punctuation: true
+#         regex_pattern: "([A-Z])\\."
+
+# # METRICS
+# metric_list:
+#   - metric: exact_match
+#     aggregation: mean
+#     higher_is_better: true
+#     ignore_case: true
+#     ignore_punctuation: true
+
+
+

@@ -1,0 +1,5 @@
+group: dso_intel
+task:
+  - dota
+  - armyrec
+# CT

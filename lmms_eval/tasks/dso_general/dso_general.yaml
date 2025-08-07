@@ -1,0 +1,6 @@
+group: dso_general
+task:
+  - nocaps
+  - okvqa
+  - mme
+  - chartqa

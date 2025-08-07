@@ -1,0 +1,61 @@
+# TASK 
+dataset_path: C:\Users\iheiman\Desktop\CODE\MUMO\lmms-eval\data\dota
+output_type: generate_until
+task: dota_grounding
+test_split: validation
+
+# PROCESSING FUNCTIONS
+process_docs: !function utils.dota_filter_grounding
+doc_to_visual: !function utils.dota_doc_to_visual
+doc_to_text: !function utils.dota_doc_to_text
+doc_to_target: "answer"
+
+# PROMPT 
+# Don't need because i already included in jsonl file
+# lmms_eval_specific_kwargs:
+#   default: 
+#     pre_prompt: ""
+#     post_prompt: "\nAnswer the question with a single word."
+#   qwen_vl:
+#     pre_prompt: ""
+#     post_prompt: " Answer:"
+
+
+# GENERATION 
+generation_kwargs:
+  max_new_tokens: 256  # Adjust based on max number of boxes expected
+  temperature: 0
+  do_sample: false
+  until:
+    - "\n"
+    - "</s>"
+
+process_results: !function utils.dota_bbox_rec_process_result
+
+metric_list:
+  - metric: dota_IoU
+    aggregation : !function utils.dota_bbox_rec_iou
+    higher_is_better : true
+  - metric: dota_ACC@0.1
+    aggregation : !function utils.dota_bbox_rec_acc01
+    higher_is_better : true
+  - metric: dota_ACC@0.3
+    aggregation : !function utils.dota_bbox_rec_acc03
+    higher_is_better : true
+  - metric: dota_ACC@0.5
+    aggregation : !function utils.dota_bbox_rec_acc05
+    higher_is_better : true
+  - metric: dota_ACC@0.7
+    aggregation : !function utils.dota_bbox_rec_acc07
+    higher_is_better : true
+  - metric: dota_ACC@0.9
+    aggregation : !function utils.dota_bbox_rec_acc09
+    higher_is_better : true
+  - metric: dota_Center_ACC
+    aggregation : !function utils.dota_bbox_rec_center_acc
+    higher_is_better : true
+metadata:
+  version: '0.0'
+
+
+

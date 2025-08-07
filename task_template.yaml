@@ -1,0 +1,46 @@
+# TASK 
+dataset_path: 
+output_type: 
+task: 
+test_split: 
+
+# PROCESSING FUNCTIONS
+(Optional) process_docs: !function 
+doc_to_visual: !function 
+doc_to_text: !function 
+doc_to_target: 
+
+# PROMPT 
+lmms_eval_specific_kwargs:
+  default:
+    pre_prompt: 
+    post_prompt: 
+  # Might be useful for grounding, require different prompt Qwen and LlavaOV
+  <another model>:
+    pre_prompt: 
+    post_prompt: 
+
+# GENERATION 
+generation_kwargs:
+  max_new_tokens: 
+  temperature: 
+  do_sample: False
+
+# POSTPROCESSING AND FILTERING
+process_results: !function 
+filter_list:
+  - name: 
+    filter:
+      - function: !function 
+        group_select: 
+        ignore_case: true
+        ignore_punctuation: true
+        regex_pattern: 
+
+# METRICS
+metric_list:
+  - metric:
+    aggregation: 
+    higher_is_better: true
+    ignore_case: true
+    ignore_punctuation: true
