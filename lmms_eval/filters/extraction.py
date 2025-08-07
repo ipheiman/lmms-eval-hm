@@ -29,8 +29,8 @@ class WhitespaceFilter(Filter):
 
         return filtered_resps
 
-class LastPunctuationFilter(Filter):
-    """Filter to remove all punctuation characters from responses."""
+class LastFullstopFilter(Filter):
+    """Filter to remove the last full stop from responses."""
 
     def __init__(self) -> None:
        pass
