@@ -2,14 +2,14 @@ import os
 import re
 import sys
 import unicodedata
-
+import string
 import openai
 
 from lmms_eval.api.filter import Filter
 
 
 class WhitespaceFilter(Filter):
-    """ """
+    """Filter to remove leading whitespace from responses."""
 
     def __init__(self) -> None:
         pass
@@ -29,6 +29,23 @@ class WhitespaceFilter(Filter):
 
         return filtered_resps
 
+class PunctuationFilter(Filter):
+    """Filter to remove all punctuation characters from responses."""
+
+    def __init__(self) -> None:
+        self.translator = str.maketrans("", "", string.punctuation)
+
+    def apply(self, resps, docs):
+        def filter_set(inst):
+            filtered_resp = []
+            for resp in inst:
+                # Remove punctuation using the translation table
+                resp = resp.translate(self.translator)
+                filtered_resp.append(resp)
+            return filtered_resp
+
+        filtered_resps = [filter_set(resp) for resp in resps]
+        return filtered_resps
 
 class RegexFilter(Filter):
     """ """
