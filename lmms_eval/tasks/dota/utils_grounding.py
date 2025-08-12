@@ -1,20 +1,13 @@
 from PIL import Image
 import re
+from scipy.optimize import linear_sum_assignment
+import numpy as np
 
 COCO_REC_METRICS = ["IoU", "ACC@0.1", "ACC@0.3", "ACC@0.5", "ACC@0.7", "ACC@0.9", "Center_ACC"]
 
 # PROCESSING FUNCTIONS
 def dota_filter_grounding(dataset):
     return dataset.filter(lambda x: x["question_type"] == "Grounding")
-
-def dota_filter_classification(dataset):
-    return dataset.filter(lambda x: x["question_type"] == "Classification")
-
-def dota_filter_captioning(dataset):
-    return dataset.filter(lambda x: x["question_type"] == "Captioning")
-
-def dota_filter_counting(dataset):
-    return dataset.filter(lambda x: x["question_type"] == "Counting")
 
 def dota_doc_to_visual(doc):
     return [Image.open(doc["image"]).convert("RGB")]
@@ -59,9 +52,7 @@ def dota_bbox_rec_process_result(doc, result):
         a dictionary with key: metric name, value: metric value
     """
     pred = result[0] if len(result) > 0 else ""
-    print(f"pred: {pred}")
     pred = parse_float_sequence_within(pred)
-    print(f"pred after parsing: {pred}")
     answer = parse_float_sequence_within(doc["answer"])
     anno_id = doc["id"]
     data_dict = {"anno_id": anno_id, "pred": pred,  "answer": answer}
@@ -79,7 +70,6 @@ def compute_iou(box1, box2):
     - float: IoU of box1 and box2.
     """
     # Determine the coordinates of the intersection rectangle
-    print(f"box1: {box1}, box2: {box2}")
     x_left = max(box1[0], box2[0])
     y_top = max(box1[1], box2[1])
     x_right = min(box1[2], box2[2])
@@ -134,37 +124,6 @@ def compute_center_accuracy(box1, box2):
 
     # Check if the center point is within box 1
     return box1[0] <= center_x <= box1[2] and box1[1] <= center_y <= box1[3]
-
-# Greedy matching
-# def match_bboxes(gt_bboxes, pred_bboxes, scorer):
-#     """
-#     Match GT bboxes to pred bboxes using greedy matching.
-#     Returns list of best scores for each GT box.
-#     """
-#     if not gt_bboxes:
-#         return [0.0] * len(pred_bboxes)
-#     if not pred_bboxes:
-#         return [0.0] * len(gt_bboxes)
-
-#     matched = set()
-#     scores = []
-#     for gt in gt_bboxes:
-#         best_score = 0.0
-#         best_pred = None
-#         for i, pred in enumerate(pred_bboxes):
-#             if i in matched:
-#                 continue
-#             score = scorer(gt, pred)
-#             if score > best_score:
-#                 best_score = score
-#                 best_pred = i
-#         if best_pred is not None:
-#             matched.add(best_pred)
-#         scores.append(best_score)
-#     return scores
-
-from scipy.optimize import linear_sum_assignment
-import numpy as np
 
 def match_bboxes(gt_bboxes, pred_bboxes, scorer):
     """
@@ -235,29 +194,6 @@ def dota_bbox_rec_aggregation_result(results, metric):
         "Center_ACC": lambda x, y: compute_center_accuracy(x, y),
     }
 
-    # scorers = {
-    #     "IoU": compute_iou,
-    #     "ACC@0.1": lambda x, y: float(compute_accuracy(x, y, 0.1)),
-    #     "ACC@0.3": lambda x, y: float(compute_accuracy(x, y, 0.3)),
-    #     "ACC@0.5": lambda x, y: float(compute_accuracy(x, y, 0.5)),
-    #     "ACC@0.7": lambda x, y: float(compute_accuracy(x, y, 0.7)),
-    #     "ACC@0.9": lambda x, y: float(compute_accuracy(x, y, 0.9)),
-    #     "Center_ACC": lambda x, y: float(compute_center_accuracy(x, y)),
-    # }
-    # scorers = {
-    #     "IoU": lambda x, y: compute_iou(
-    #         list(map(float, x)),
-    #         list(map(float, y))
-    #     ),
-    #     "ACC@0.1": lambda x, y: float(compute_accuracy(list(map(float, x)), list(map(float, y)), 0.1)),
-    #     "ACC@0.3": lambda x, y: float(compute_accuracy(list(map(float, x)), list(map(float, y)), 0.3)),
-    #     "ACC@0.5": lambda x, y: float(compute_accuracy(list(map(float, x)), list(map(float, y)), 0.5)),
-    #     "ACC@0.7": lambda x, y: float(compute_accuracy(list(map(float, x)), list(map(float, y)), 0.7)),
-    #     "ACC@0.9": lambda x, y: float(compute_accuracy(list(map(float, x)), list(map(float, y)), 0.9)),
-    #     "Center_ACC": lambda x, y: float(compute_center_accuracy(list(map(float, x)), list(map(float, y)))),
-    # }
-
-    
     scorer = scorers[metric]
     scores_all = []
     for result in results:

@@ -1,39 +1,23 @@
-from PIL import ImageDraw
+from PIL import Image
+# from PIL import ImageDraw
 from pycocoevalcap.eval import Bleu, Cider, COCOEvalCap, Meteor, Rouge, Spice
 from pycocoevalcap.tokenizer.ptbtokenizer import PTBTokenizer
 from pycocotools.coco import COCO
+from loguru import logger as eval_logger
 
 COCO_METRICS = ["Bleu_4", "Bleu_3", "Bleu_2", "Bleu_1", "METEOR", "ROUGE_L", "CIDEr"]  # , "SPICE"]
 
+def dota_filter_captioning(dataset):
+    return dataset.filter(lambda x: x["question_type"] == "Captioning")
 
-from loguru import logger as eval_logger
+def dota_doc_to_visual(doc):
+    return [Image.open(doc["image"]).convert("RGB")]
 
+def dota_doc_to_text(doc):
+    question = doc["question"]
+    return question
 
-def refcoco_bbox_doc_to_visual(doc):
-    bbox = doc["bbox"]
-    image = doc["image"].convert("RGB")
-    draw = ImageDraw.Draw(image)
-    # Origin format (top x, top y, width, height)
-    bbox_xy = [bbox[0], bbox[1], bbox[0] + bbox[2], bbox[1] + bbox[3]]
-    draw.rectangle(bbox_xy, outline="red")
-    return [image.convert("RGB")]
-
-
-def refcoco_seg_doc_to_visual(doc):
-    seg = doc["segmentation"]
-    image = doc["image"].convert("RGB")
-    draw = ImageDraw.Draw(image)
-    draw.polygon(seg)
-    return [image.convert("RGB")]
-
-
-def refcoco_doc_to_text(doc):
-    # question = doc["question"]
-    # return f"{question}\nAnswer the question using a single word or phrase."
-    return "Provide a short description for this region."
-
-
-def refcoco_process_result(doc, result):
+def dota_process_result(doc, result):
     """
     Args:
         doc: a instance of the eval dataset
@@ -42,13 +26,15 @@ def refcoco_process_result(doc, result):
         a dictionary with key: metric name (in this case coco_bleu), value: metric value
     """
     pred = result[0] if len(result) > 0 else ""
-    ann_id = doc["question_id"]
+    ann_id = doc["id"]
     data_dict = {"answer": doc["answer"], "pred": pred, "ann_id": ann_id}
-    return {f"refcoco_{metric}": data_dict for metric in COCO_METRICS}
+    return {f"dota_{metric}": data_dict for metric in COCO_METRICS}
 
 
-def refcoco_aggregation_result(results, metric):
+def dota_aggregation_result(results, metric):
+    # scorers = [(Bleu(4), "Bleu_1"), (Bleu(4), "Bleu_2"), (Bleu(4), "Bleu_3"), (Bleu(4), "Bleu_4"), (Meteor(), "METEOR"), (Rouge(), "ROUGE_L"), (Cider(), "CIDEr")]  # , (Spice(), "SPICE")]
     scorers = [(Bleu(1), "Bleu_1"), (Bleu(2), "Bleu_2"), (Bleu(3), "Bleu_3"), (Bleu(4), "Bleu_4"), (Rouge(), "ROUGE_L"), (Cider(), "CIDEr")]  # , (Spice(), "SPICE")]
+
     scorers_dict = {s[1]: s for s in scorers}
 
     stored_results = []
@@ -57,7 +43,11 @@ def refcoco_aggregation_result(results, metric):
     # 'annotation' and 'images'
     # 'annotation' exactly reproduce the original annotation
     # 'images' however only need the image id which is contained in the file name
-    dataset = {"annotations": [], "images": []}
+    dataset = {
+        "info": {},
+        "annotations": [],
+        "images": []
+    }
     idx = 0
     ann_id = 0
     for result in results:
@@ -102,33 +92,33 @@ def refcoco_aggregation_result(results, metric):
     return score
 
 
-def refcoco_bleu4(results):
-    return refcoco_aggregation_result(results, "Bleu_4")
+def dota_bleu4(results):
+    return dota_aggregation_result(results, "Bleu_4")
 
 
-def refcoco_bleu3(results):
-    return refcoco_aggregation_result(results, "Bleu_3")
+def dota_bleu3(results):
+    return dota_aggregation_result(results, "Bleu_3")
 
 
-def refcoco_bleu2(results):
-    return refcoco_aggregation_result(results, "Bleu_2")
+def dota_bleu2(results):
+    return dota_aggregation_result(results, "Bleu_2")
 
 
-def refcoco_bleu1(results):
-    return refcoco_aggregation_result(results, "Bleu_1")
+def dota_bleu1(results):
+    return dota_aggregation_result(results, "Bleu_1")
 
 
-def refcoco_meteor(results):
-    return refcoco_aggregation_result(results, "METEOR")
+def dota_meteor(results):
+    return dota_aggregation_result(results, "METEOR")
 
 
-def refcoco_rougel(results):
-    return refcoco_aggregation_result(results, "ROUGE_L")
+def dota_rougel(results):
+    return dota_aggregation_result(results, "ROUGE_L")
 
 
-def refcoco_cider(results):
-    return refcoco_aggregation_result(results, "CIDEr")
+def dota_cider(results):
+    return dota_aggregation_result(results, "CIDEr")
 
 
-def refcoco_spice(results):
-    return refcoco_aggregation_result(results, "SPICE")
+def dota_spice(results):
+    return dota_aggregation_result(results, "SPICE")
