@@ -47,7 +47,7 @@ def parse_float_sequence_within(input_str):
         return [[float(x1), float(y1), float(x2), float(y2)] for x1, y1, x2, y2 in matches]
 
     # If the input does not contain any valid bounding boxes, return an empty list
-    return [0, 0, 0, 0]
+    return [[0, 0, 0, 0]]
 
 
 def dota_bbox_rec_process_result(doc, result):
@@ -59,9 +59,12 @@ def dota_bbox_rec_process_result(doc, result):
         a dictionary with key: metric name, value: metric value
     """
     pred = result[0] if len(result) > 0 else ""
+    print(f"pred: {pred}")
     pred = parse_float_sequence_within(pred)
+    print(f"pred after parsing: {pred}")
+    answer = parse_float_sequence_within(doc["answer"])
     anno_id = doc["id"]
-    data_dict = {"anno_id": anno_id, "pred": pred,  "answer": doc["answer"]}
+    data_dict = {"anno_id": anno_id, "pred": pred,  "answer": answer}
     return {f"dota_{metric}": data_dict for metric in COCO_REC_METRICS}
 
 def compute_iou(box1, box2):
@@ -76,6 +79,7 @@ def compute_iou(box1, box2):
     - float: IoU of box1 and box2.
     """
     # Determine the coordinates of the intersection rectangle
+    print(f"box1: {box1}, box2: {box2}")
     x_left = max(box1[0], box2[0])
     y_top = max(box1[1], box2[1])
     x_right = min(box1[2], box2[2])
@@ -131,32 +135,83 @@ def compute_center_accuracy(box1, box2):
     # Check if the center point is within box 1
     return box1[0] <= center_x <= box1[2] and box1[1] <= center_y <= box1[3]
 
+# Greedy matching
+# def match_bboxes(gt_bboxes, pred_bboxes, scorer):
+#     """
+#     Match GT bboxes to pred bboxes using greedy matching.
+#     Returns list of best scores for each GT box.
+#     """
+#     if not gt_bboxes:
+#         return [0.0] * len(pred_bboxes)
+#     if not pred_bboxes:
+#         return [0.0] * len(gt_bboxes)
+
+#     matched = set()
+#     scores = []
+#     for gt in gt_bboxes:
+#         best_score = 0.0
+#         best_pred = None
+#         for i, pred in enumerate(pred_bboxes):
+#             if i in matched:
+#                 continue
+#             score = scorer(gt, pred)
+#             if score > best_score:
+#                 best_score = score
+#                 best_pred = i
+#         if best_pred is not None:
+#             matched.add(best_pred)
+#         scores.append(best_score)
+#     return scores
+
+from scipy.optimize import linear_sum_assignment
+import numpy as np
+
 def match_bboxes(gt_bboxes, pred_bboxes, scorer):
     """
-    Match GT bboxes to pred bboxes using greedy matching.
-    Returns list of best scores for each GT box.
+    Match GT bboxes to pred bboxes using Hungarian matching.
+    Returns list of best scores for each GT box (0 if no match).
+
+    Args:
+        gt_bboxes (list): List of ground truth boxes.
+        pred_bboxes (list): List of predicted boxes.
+        scorer (function): Function to score (gt_box, pred_box).
+
+    Returns:
+        List[float]: Best scores for each GT box.
     """
-    if not gt_bboxes:
-        return [0.0] * len(pred_bboxes)
-    if not pred_bboxes:
+    if len(gt_bboxes) == 0:
+        # No GT: no scores for GT
+        return []
+    if len(pred_bboxes) == 0:
+        # No predictions: all GT have zero score
         return [0.0] * len(gt_bboxes)
 
-    matched = set()
-    scores = []
-    for gt in gt_bboxes:
-        best_score = 0.0
-        best_pred = None
-        for i, pred in enumerate(pred_bboxes):
-            if i in matched:
-                continue
+    # Build cost matrix (GT x Pred) by scoring each pair
+    cost_matrix = np.zeros((len(gt_bboxes), len(pred_bboxes)), dtype=np.float32)
+    for i, gt in enumerate(gt_bboxes):
+        for j, pred in enumerate(pred_bboxes):
             score = scorer(gt, pred)
-            if score > best_score:
-                best_score = score
-                best_pred = i
-        if best_pred is not None:
-            matched.add(best_pred)
-        scores.append(best_score)
+            # We want to maximize score, but linear_sum_assignment minimizes cost,
+            # so use negative score as cost.
+            cost_matrix[i, j] = -score
+
+    # Hungarian algorithm to find optimal assignment
+    gt_indices, pred_indices = linear_sum_assignment(cost_matrix)
+
+    # Prepare results: for each GT box, assign best score or 0 if no assignment
+    scores = [0.0] * len(gt_bboxes)
+    assigned_preds = set()
+    for gt_i, pred_i in zip(gt_indices, pred_indices):
+        # Only assign if score > 0 (optional: you can change threshold here)
+        if -cost_matrix[gt_i, pred_i] > 0:
+            scores[gt_i] = -cost_matrix[gt_i, pred_i]
+            assigned_preds.add(pred_i)
+        else:
+            # Score too low, consider no match
+            scores[gt_i] = 0.0
+
     return scores
+
 
 def dota_bbox_rec_aggregation_result(results, metric):
     """
@@ -169,21 +224,44 @@ def dota_bbox_rec_aggregation_result(results, metric):
     Returns:
     - dict: Dictionary containing the aggregated results for the specified metric.
     """
-    
+
     scorers = {
         "IoU": compute_iou,
-        "ACC@0.1": lambda x, y: float(compute_accuracy(x, y, 0.1)),
-        "ACC@0.3": lambda x, y: float(compute_accuracy(x, y, 0.3)),
-        "ACC@0.5": lambda x, y: float(compute_accuracy(x, y, 0.5)),
-        "ACC@0.7": lambda x, y: float(compute_accuracy(x, y, 0.7)),
-        "ACC@0.9": lambda x, y: float(compute_accuracy(x, y, 0.9)),
-        "Center_ACC": lambda x, y: float(compute_center_accuracy(x, y)),
+        "ACC@0.1": lambda x, y: compute_accuracy(x, y, 0.1),
+        "ACC@0.3": lambda x, y: compute_accuracy(x, y, 0.3),
+        "ACC@0.5": lambda x, y: compute_accuracy(x, y, 0.5),
+        "ACC@0.7": lambda x, y: compute_accuracy(x, y, 0.7),
+        "ACC@0.9": lambda x, y: compute_accuracy(x, y, 0.9),
+        "Center_ACC": lambda x, y: compute_center_accuracy(x, y),
     }
+
+    # scorers = {
+    #     "IoU": compute_iou,
+    #     "ACC@0.1": lambda x, y: float(compute_accuracy(x, y, 0.1)),
+    #     "ACC@0.3": lambda x, y: float(compute_accuracy(x, y, 0.3)),
+    #     "ACC@0.5": lambda x, y: float(compute_accuracy(x, y, 0.5)),
+    #     "ACC@0.7": lambda x, y: float(compute_accuracy(x, y, 0.7)),
+    #     "ACC@0.9": lambda x, y: float(compute_accuracy(x, y, 0.9)),
+    #     "Center_ACC": lambda x, y: float(compute_center_accuracy(x, y)),
+    # }
+    # scorers = {
+    #     "IoU": lambda x, y: compute_iou(
+    #         list(map(float, x)),
+    #         list(map(float, y))
+    #     ),
+    #     "ACC@0.1": lambda x, y: float(compute_accuracy(list(map(float, x)), list(map(float, y)), 0.1)),
+    #     "ACC@0.3": lambda x, y: float(compute_accuracy(list(map(float, x)), list(map(float, y)), 0.3)),
+    #     "ACC@0.5": lambda x, y: float(compute_accuracy(list(map(float, x)), list(map(float, y)), 0.5)),
+    #     "ACC@0.7": lambda x, y: float(compute_accuracy(list(map(float, x)), list(map(float, y)), 0.7)),
+    #     "ACC@0.9": lambda x, y: float(compute_accuracy(list(map(float, x)), list(map(float, y)), 0.9)),
+    #     "Center_ACC": lambda x, y: float(compute_center_accuracy(list(map(float, x)), list(map(float, y)))),
+    # }
+
     
     scorer = scorers[metric]
     scores_all = []
     for result in results:
-        gt_bboxes = result["bbox"]
+        gt_bboxes = result["answer"]
         pred_bboxes = result["pred"]
         scores = match_bboxes(gt_bboxes, pred_bboxes, scorer)
         avg_score = sum(scores) / len(scores) if scores else 0.0

@@ -1,7 +1,7 @@
 # TASK 
-dataset_path: C:\Users\iheiman\Desktop\CODE\MUMO\lmms-eval\data\dota
+dataset_path: C:\Users\iheiman\Desktop\CODE\MUMO\lmms-eval-hm\data\dota
 output_type: generate_until
-task: dota_grounding
+task: dota
 test_split: validation
 
 # PROCESSING FUNCTIONS
