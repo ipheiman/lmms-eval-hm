@@ -1,7 +1,8 @@
 group: dota
 task:
-  - dota_counting
-  - dota_grounding
-  - dota_short_caption
-  - dota_classification
+- dota_grounding
+  # - dota_counting
+  # - dota_grounding
+  # - dota_short_caption
+  # - dota_classification
 
