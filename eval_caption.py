@@ -13,21 +13,8 @@ candidates = {
 }
 
 
-# Ensure the candidate dictionary has a single generated caption per image ID for evaluation.
-# If you have multiple generated captions for an image, select one for CIDEr calculation.
-# For simplicity in this example, we'll assume a single candidate per image.
-# If 'img1' had two candidates, you'd choose one, e.g., candidates_for_eval = {'img1': 'A cat on a couch.', 'img2': 'People walking on the street.'}
-
-# Create a Cider object.
-# n=4 indicates using up to 4-grams for similarity calculation.
-# sigma=6.0 is a parameter for the exponential weighting of n-grams.
 cider_scorer = Cider()
 
-# Compute the CIDEr score.
-# The compute_score method takes two dictionaries:
-# 1. The references dictionary (image_id: [list of reference captions])
-# 2. The candidates dictionary (image_id: [list of candidate captions - typically one per image])
-# It returns the average CIDEr score for the corpus and a dictionary of scores per image.
 score, scores = cider_scorer.compute_score(references, candidates)
 
 print(f"Average CIDEr score: {score:.4f}")

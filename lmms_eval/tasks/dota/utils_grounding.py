@@ -157,7 +157,7 @@ def match_bboxes(gt_bboxes, pred_bboxes, scorer):
     return scores
 
 
-def dota_bbox_rec_process_result(doc, result):
+def dota_grounding_process_results(doc, result):
     pred = result[0] if len(result) > 0 else ""
     pred = parse_float_sequence_within(pred)
     answer = parse_float_sequence_within(doc["answer"])
@@ -167,7 +167,7 @@ def dota_bbox_rec_process_result(doc, result):
 
     output = {}
     for metric in COCO_REC_METRICS:
-        score = dota_bbox_rec_sample_score(base_data, metric)  # calculate per-sample score
+        score = dota_grounding_sample_score(base_data, metric)  # calculate per-sample score
         # Include score in each metric dict
         data_with_score = base_data.copy()
         data_with_score["score"] = score
@@ -175,7 +175,7 @@ def dota_bbox_rec_process_result(doc, result):
 
     return output
 
-def dota_bbox_rec_sample_score(result, metric):
+def dota_grounding_sample_score(result, metric):
     """
     Calculate the score for a single sample based on the given metric.
 
@@ -211,7 +211,7 @@ def dota_bbox_rec_sample_score(result, metric):
 
 # Calculates based on metric
 
-def dota_bbox_rec_aggregation_result(results):
+def dota_grounding_aggregation_result(results):
     """
     Aggregate the results of the dota evaluation task using the specified metric.
 
@@ -229,75 +229,5 @@ def dota_bbox_rec_aggregation_result(results):
     final_score = sum(scores_all) / len(scores_all)
     return final_score
 
-# def dota_bbox_rec_aggregation_result(results, metric):
-#     """
-#     Aggregate the results of the dota evaluation task using the specified metric.
-
-#     Args:
-#     - results (list of dict): List of result dictionaries.
-#     - metric (str): Metric to use for aggregation.
-
-#     Returns:
-#     - dict: Dictionary containing the aggregated results for the specified metric.
-#     """
-
-#     print(results)
-#     scorers = {
-#         "IoU": compute_iou,
-#         "ACC@0.1": lambda x, y: compute_accuracy(x, y, 0.1),
-#         "ACC@0.3": lambda x, y: compute_accuracy(x, y, 0.3),
-#         "ACC@0.5": lambda x, y: compute_accuracy(x, y, 0.5),
-#         "ACC@0.7": lambda x, y: compute_accuracy(x, y, 0.7),
-#         "ACC@0.9": lambda x, y: compute_accuracy(x, y, 0.9),
-#         "Center_ACC": lambda x, y: compute_center_accuracy(x, y),
-#     }
-
-#     scorer = scorers[metric]
-#     scores_all = []
-#     for result in results:
-#         gt_bboxes = result["answer"]
-#         pred_bboxes = result["pred"]
-#         scores = match_bboxes(gt_bboxes, pred_bboxes, scorer)
-#         avg_score = sum(scores) / len(scores) if scores else 0.0
-#         scores_all.append(avg_score)
-#     final_score = sum(scores_all) / len(scores_all)
-#     print(f"Aggregated {metric} score: {final_score}")
-#     return final_score
-
-
-# def dota_bbox_rec_iou(results):
-#     # return dota_bbox_rec_aggregation_result(results, "IoU")
-#     return dota_bbox_rec_aggregation_result(results)    
-
-
-# def dota_bbox_rec_acc01(results):
-#     # return dota_bbox_rec_aggregation_result(results, "ACC@0.1")
-#     return dota_bbox_rec_aggregation_result(results)    
-
-
-# def dota_bbox_rec_acc03(results):
-#     # return dota_bbox_rec_aggregation_result(results, "ACC@0.3")
-#     return dota_bbox_rec_aggregation_result(results)    
-
-
-# def dota_bbox_rec_acc05(results):
-#     # return dota_bbox_rec_aggregation_result(results, "ACC@0.5")
-#     return dota_bbox_rec_aggregation_result(results)    
-
-
-# def dota_bbox_rec_acc07(results):
-#     # return dota_bbox_rec_aggregation_result(results, "ACC@0.7")
-#     return dota_bbox_rec_aggregation_result(results)    
-
-
-# def dota_bbox_rec_acc09(results):
-#     # return dota_bbox_rec_aggregation_result(results, "ACC@0.1")
-#     return dota_bbox_rec_aggregation_result(results)    
-
-
-# def dota_bbox_rec_center_acc(results):
-#     # return dota_bbox_rec_aggregation_result(results, "Center_ACC")
-#     return dota_bbox_rec_aggregation_result(results)    
-
-def dota_bbox_rec(results):
-    return dota_bbox_rec_aggregation_result(results)    
+def dota_grounding(results):
+    return dota_grounding_aggregation_result(results)    

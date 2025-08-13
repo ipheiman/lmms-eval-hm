@@ -30,29 +30,29 @@ generation_kwargs:
     - "\n"
     - "</s>"
 
-process_results: !function utils_grounding.dota_bbox_rec_process_result
+process_results: !function utils_grounding.dota_grounding_process_results
 
 metric_list:
   - metric: dota_IoU
-    aggregation : !function utils_grounding.dota_bbox_rec
+    aggregation : !function utils_grounding.dota_grounding
     higher_is_better : true
   - metric: dota_ACC@0.1
-    aggregation : !function utils_grounding.dota_bbox_rec
+    aggregation : !function utils_grounding.dota_grounding
     higher_is_better : true
   - metric: dota_ACC@0.3
-    aggregation : !function utils_grounding.dota_bbox_rec
+    aggregation : !function utils_grounding.dota_grounding
     higher_is_better : true
   - metric: dota_ACC@0.5
-    aggregation : !function utils_grounding.dota_bbox_rec
+    aggregation : !function utils_grounding.dota_grounding
     higher_is_better : true
   - metric: dota_ACC@0.7
-    aggregation : !function utils_grounding.dota_bbox_rec
+    aggregation : !function utils_grounding.dota_grounding
     higher_is_better : true
   - metric: dota_ACC@0.9
-    aggregation : !function utils_grounding.dota_bbox_rec
+    aggregation : !function utils_grounding.dota_grounding
     higher_is_better : true
   - metric: dota_Center_ACC
-    aggregation : !function utils_grounding.dota_bbox_rec
+    aggregation : !function utils_grounding.dota_grounding
     higher_is_better : true
 metadata:
   version: '0.0'

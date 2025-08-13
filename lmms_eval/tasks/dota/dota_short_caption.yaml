@@ -25,31 +25,31 @@ generation_kwargs:
   temperature: 0
   do_sample: false
 
-process_results: !function utils_short_caption.dota_process_result
+process_results: !function utils_short_caption.dota_caption_process_result
 metric_list:
   - metric: dota_Bleu_4 
-    aggregation : !function utils_short_caption.dota_bleu4
+    aggregation : !function utils_short_caption.dota_captioning
     higher_is_better : true
   - metric: dota_Bleu_3
-    aggregation : !function utils_short_caption.dota_bleu3
+    aggregation : !function utils_short_caption.dota_captioning
     higher_is_better : true
   - metric: dota_Bleu_2
-    aggregation : !function utils_short_caption.dota_bleu2
+    aggregation : !function utils_short_caption.dota_captioning
     higher_is_better : true
   - metric: dota_Bleu_1
-    aggregation : !function utils_short_caption.dota_bleu1
+    aggregation : !function utils_short_caption.dota_captioning
     higher_is_better : true
   # - metric: dota_METEOR
-  #   aggregation : !function utils_short_caption.dota_meteor
+  #   aggregation : !function utils_short_caption.dota_captioning
   #   higher_is_better : true
   - metric: dota_ROUGE_L
-    aggregation : !function utils_short_caption.dota_rougel
+    aggregation : !function utils_short_caption.dota_captioning
     higher_is_better : true
-  - metric: dota_CIDEr
-    aggregation : !function utils_short_caption.dota_cider
-    higher_is_better : true
+  # - metric: dota_CIDEr
+  #   aggregation : !function utils_short_caption.dota_captioning
+  #   higher_is_better : true
   #- metric: dota_SPICE
-  #  aggregation : !function utils_short_caption.dota_spice
+  #  aggregation : !function utils_short_caption.dota_captioning
   #  higher_is_better : true
 metadata:
   version: '0.0'
