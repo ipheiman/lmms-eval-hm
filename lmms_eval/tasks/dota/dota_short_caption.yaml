@@ -27,21 +27,21 @@ generation_kwargs:
 
 process_results: !function utils_short_caption.dota_caption_process_result
 metric_list:
-  # - metric: dota_Bleu_4 
-  #   aggregation : !function utils_short_caption.dota_bleu4
-  #   higher_is_better : true
-  # - metric: dota_Bleu_3
-  #   aggregation : !function utils_short_caption.dota_bleu3
-  #   higher_is_better : true
-  # - metric: dota_Bleu_2
-  #   aggregation : !function utils_short_caption.dota_bleu2
-  #   higher_is_better : true
-  # - metric: dota_Bleu_1
-  #   aggregation : !function utils_short_caption.dota_bleu1
-  #   higher_is_better : true
-  # - metric: dota_ROUGE_L
-  #   aggregation : !function utils_short_caption.dota_rougel
-  #   higher_is_better : true
+  - metric: dota_Bleu_4 
+    aggregation : !function utils_short_caption.dota_bleu4
+    higher_is_better : true
+  - metric: dota_Bleu_3
+    aggregation : !function utils_short_caption.dota_bleu3
+    higher_is_better : true
+  - metric: dota_Bleu_2
+    aggregation : !function utils_short_caption.dota_bleu2
+    higher_is_better : true
+  - metric: dota_Bleu_1
+    aggregation : !function utils_short_caption.dota_bleu1
+    higher_is_better : true
+  - metric: dota_ROUGE_L
+    aggregation : !function utils_short_caption.dota_rougel
+    higher_is_better : true
   - metric: dota_CIDEr
     aggregation : !function utils_short_caption.dota_cider
     higher_is_better : true
